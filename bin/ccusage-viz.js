@@ -8,6 +8,9 @@
  * common ChartRow shape before rendering.
  */
 
+import { readFileSync, realpathSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+
 /**
  * @typedef {object} ChartRow
  * @property {string} label   - 行ラベル(日付・週・月・ブロック開始時刻)
@@ -47,15 +50,13 @@ export function normalizeReport(report) {
   if (Array.isArray(report.blocks)) {
     const rows = report.blocks
       .filter((/** @type {any} */ entry) => entry.isGap !== true)
-      .map(
-        (/** @type {any} */ entry) => ({
-          label: formatBlockLabel(entry.startTime),
-          cost: entry.costUSD,
-          tokens: entry.totalTokens,
-          note: shortenModels(entry.models),
-          active: entry.isActive === true,
-        }),
-      );
+      .map((/** @type {any} */ entry) => ({
+        label: formatBlockLabel(entry.startTime),
+        cost: entry.costUSD,
+        tokens: entry.totalTokens,
+        note: shortenModels(entry.models),
+        active: entry.isActive === true,
+      }));
     const activeBlock = report.blocks.find(
       (/** @type {any} */ entry) => entry.isActive === true && entry.projection,
     );
@@ -74,13 +75,11 @@ export function normalizeReport(report) {
   }
   for (const [kind, labelKey] of Object.entries(LABEL_KEYS)) {
     if (Array.isArray(report[kind])) {
-      const rows = report[kind].map(
-        (/** @type {any} */ entry) => ({
-          label: entry[labelKey] ?? entry.period,
-          cost: entry.totalCost,
-          tokens: entry.totalTokens,
-        }),
-      );
+      const rows = report[kind].map((/** @type {any} */ entry) => ({
+        label: entry[labelKey] ?? entry.period,
+        cost: entry.totalCost,
+        tokens: entry.totalTokens,
+      }));
       return { kind, rows };
     }
   }
@@ -220,9 +219,13 @@ export function renderReport(normalized, { width, color }) {
   const { kind, rows, projection } = normalized;
   const unit = UNITS[/** @type {keyof typeof UNITS} */ (kind)];
   const summary = summarize(rows);
+  const header = `ccusage ${kind} — ${summary.count} ${unit}${summary.count === 1 ? "" : "s"}`;
+  if (rows.length === 0) {
+    return `${header}\n\n(no data)\n`;
+  }
   const chartOptions = { withNotes: kind === "blocks", width, color };
   const lines = [
-    `ccusage ${kind} — ${summary.count} ${unit}${summary.count === 1 ? "" : "s"}`,
+    header,
     "",
     "Cost (USD)",
     ...renderChart(rows, {
@@ -281,4 +284,134 @@ function shortenModels(models) {
     return "";
   }
   return models.map((model) => model.replace(/^claude-/, "")).join(", ");
+}
+
+// ---------------------------------------------------------------------------
+// CLI
+// ---------------------------------------------------------------------------
+
+const USAGE = `Usage: ccusage-viz [options] [file]
+
+Visualize ccusage JSON reports (daily/weekly/monthly/blocks) as bar charts.
+Reads JSON from a file argument or stdin:
+
+  ccusage daily --json | ccusage-viz
+  ccusage blocks --json > report.json && ccusage-viz report.json
+
+Options:
+  --no-color     Disable colored output (also disabled by NO_COLOR / non-TTY)
+  -h, --help     Show this help
+  -v, --version  Show version
+`;
+
+/**
+ * @param {string[]} argv
+ * @returns {{ help: boolean, version: boolean, noColor: boolean, file?: string }}
+ */
+function parseArgs(argv) {
+  /** @type {{ help: boolean, version: boolean, noColor: boolean, file?: string }} */
+  const parsed = { help: false, version: false, noColor: false };
+  for (const arg of argv) {
+    if (arg === "-h" || arg === "--help") {
+      parsed.help = true;
+    } else if (arg === "-v" || arg === "--version") {
+      parsed.version = true;
+    } else if (arg === "--no-color") {
+      parsed.noColor = true;
+    } else if (arg.startsWith("-")) {
+      throw new RangeError(`unknown option: ${arg}`);
+    } else {
+      parsed.file = arg;
+    }
+  }
+  return parsed;
+}
+
+/** @returns {Promise<string>} */
+async function readStdin() {
+  let data = "";
+  for await (const chunk of process.stdin) {
+    data += chunk;
+  }
+  return data;
+}
+
+async function main() {
+  /** @type {ReturnType<typeof parseArgs>} */
+  let args;
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(`Error: ${/** @type {Error} */ (error).message}\n\n${USAGE}`);
+    process.exitCode = 2;
+    return;
+  }
+  if (args.help) {
+    process.stdout.write(USAGE);
+    return;
+  }
+  if (args.version) {
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+    process.stdout.write(`${pkg.version}\n`);
+    return;
+  }
+
+  let input;
+  if (args.file !== undefined) {
+    try {
+      input = readFileSync(args.file, "utf8");
+    } catch (error) {
+      process.stderr.write(`Error: ${/** @type {Error} */ (error).message}\n`);
+      process.exitCode = 1;
+      return;
+    }
+  } else if (process.stdin.isTTY) {
+    process.stderr.write(USAGE);
+    process.exitCode = 2;
+    return;
+  } else {
+    input = await readStdin();
+  }
+  if (input.trim() === "") {
+    process.stderr.write(USAGE);
+    process.exitCode = 2;
+    return;
+  }
+
+  let report;
+  try {
+    report = JSON.parse(input);
+  } catch {
+    process.stderr.write("Error: failed to parse input as JSON\n");
+    process.exitCode = 1;
+    return;
+  }
+
+  let normalized;
+  try {
+    normalized = normalizeReport(report);
+  } catch (error) {
+    process.stderr.write(`Error: ${/** @type {Error} */ (error).message}\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const color =
+    !args.noColor && process.env.NO_COLOR === undefined && process.stdout.isTTY === true;
+  const width = process.stdout.columns ?? 80;
+  process.stdout.write(renderReport(normalized, { width, color }));
+}
+
+// テストから import されたときに main が走らないよう、直接実行時のみ起動する。
+// npx は bin をシンボリックリンクで配置するため realpath で比較する。
+let isMain = false;
+try {
+  isMain =
+    process.argv[1] !== undefined &&
+    import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+} catch {
+  isMain = false;
+}
+if (isMain) {
+  await main();
 }

@@ -35,10 +35,7 @@ test("normalizes blocks: local-time label, shortened model note", () => {
 
 test("skips gap blocks", () => {
   const report = {
-    blocks: [
-      block({}),
-      block({ id: "gap-1", isGap: true, costUSD: 0, totalTokens: 0 }),
-    ],
+    blocks: [block({}), block({ id: "gap-1", isGap: true, costUSD: 0, totalTokens: 0 })],
   };
   expect(normalizeReport(report).rows).toHaveLength(1);
 });

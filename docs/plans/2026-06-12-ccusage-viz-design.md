@@ -11,17 +11,17 @@
 
 ## 確定済みの意思決定
 
-| 論点 | 決定 |
-|---|---|
-| 名前 | `ccusage-viz`(npm には公開しない) |
-| 配布 | `npx github:r-tamura/ccusage-viz`。タグ `v1.0.0` を切って案内 |
-| 実装形態 | JS 1ファイル(`bin/ccusage-viz.js`、shebang 付き)+ JSDoc 型注釈 |
-| 依存 | ランタイム依存ゼロ。devDeps は typescript / vitest / oxlint / oxfmt(+ @types/node) |
-| ツールチェーン | パッケージ管理は pnpm、テストは vitest、リンターは oxlint、フォーマッタは oxfmt |
-| 入力 | パイプ(stdin)/ファイル引数のみ。ccusage を内部実行しない |
-| 対応種別 | daily / weekly / monthly / blocks 全部。トップレベルキーで自動判別、サブコマンドなし |
-| オプション | `--help` / `--version` / `--no-color` のみ |
-| Node 要件 | >= 18 |
+| 論点           | 決定                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------ |
+| 名前           | `ccusage-viz`(npm には公開しない)                                                    |
+| 配布           | `npx github:r-tamura/ccusage-viz`。タグ `v1.0.0` を切って案内                        |
+| 実装形態       | JS 1ファイル(`bin/ccusage-viz.js`、shebang 付き)+ JSDoc 型注釈                       |
+| 依存           | ランタイム依存ゼロ。devDeps は typescript / vitest / oxlint / oxfmt(+ @types/node)   |
+| ツールチェーン | パッケージ管理は pnpm、テストは vitest、リンターは oxlint、フォーマッタは oxfmt      |
+| 入力           | パイプ(stdin)/ファイル引数のみ。ccusage を内部実行しない                             |
+| 対応種別       | daily / weekly / monthly / blocks 全部。トップレベルキーで自動判別、サブコマンドなし |
+| オプション     | `--help` / `--version` / `--no-color` のみ                                           |
+| Node 要件      | >= 18                                                                                |
 
 ### TS 1ファイルにしない理由(実証済みの制約)
 
@@ -56,12 +56,12 @@ Node(v26.2.0 で実証)は node_modules 配下の TS の type stripping を
 トップレベルキーの存在で判別する: `daily` / `weekly` / `monthly` / `blocks`。
 未知のキーのみの場合はエラー(exit 1)。
 
-| 種別 | ラベル元キー |
-|---|---|
-| daily | `date`(新しめの ccusage では `period`) |
-| weekly | `week`(同上 `period`) |
-| monthly | `month`(同上 `period`) |
-| blocks | `startTime` をローカル時刻 `MM-DD HH:mm` に整形 |
+| 種別    | ラベル元キー                                    |
+| ------- | ----------------------------------------------- |
+| daily   | `date`(新しめの ccusage では `period`)          |
+| weekly  | `week`(同上 `period`)                           |
+| monthly | `month`(同上 `period`)                          |
+| blocks  | `startTime` をローカル時刻 `MM-DD HH:mm` に整形 |
 
 daily/weekly/monthly の見た目は ccusage-graph 互換を保つ。
 
@@ -93,11 +93,11 @@ gap 要素は `id` が `gap-...` で `isGap: true`。トップレベル `totals`
 
 メッセージは英語、出力先は stderr。
 
-| 状況 | 挙動 |
-|---|---|
+| 状況                                        | 挙動                    |
+| ------------------------------------------- | ----------------------- |
 | 入力なし(stdin が TTY かつファイル引数なし) | usage を表示して exit 2 |
-| JSON パース失敗 | exit 1 |
-| 未知のトップレベルキー | exit 1 |
+| JSON パース失敗                             | exit 1                  |
+| 未知のトップレベルキー                      | exit 1                  |
 
 ## テスト戦略
 

@@ -123,3 +123,9 @@ test("colors cost bars cyan, token bars magenta, and active rows yellow", () => 
   const plain = renderReport(normalized, { width: 32, color: false });
   expect(plain).not.toContain("\x1b[");
 });
+
+test("renders an empty report without charts", () => {
+  expect(renderReport({ kind: "daily", rows: [] }, { width: 30, color: false })).toBe(
+    "ccusage daily — 0 days\n\n(no data)\n",
+  );
+});

@@ -2,31 +2,23 @@
   "name": "ccusage-viz",
   "version": "1.0.0",
   "description": "Visualize ccusage JSON reports (daily/weekly/monthly/blocks) as bar charts in your terminal",
-  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/r-tamura/ccusage-viz.git"
+  },
   "bin": {
     "ccusage-viz": "bin/ccusage-viz.js"
   },
   "files": [
     "bin"
   ],
+  "type": "module",
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc",
     "lint": "oxlint",
     "format": "oxfmt"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/r-tamura/ccusage-viz.git"
-  },
-  "license": "MIT",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   },
   "devDependencies": {
     "@types/node": "^18.19.0",
@@ -34,5 +26,13 @@
     "oxlint": "latest",
     "typescript": "^5.8.0",
     "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

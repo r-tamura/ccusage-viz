@@ -1,0 +1,73 @@
+{
+  "blocks": [
+    {
+      "id": "2026-06-12T05:00:00.000Z",
+      "startTime": "2026-06-12T05:00:00.000Z",
+      "endTime": "2026-06-12T10:00:00.000Z",
+      "actualEndTime": "2026-06-12T07:42:00.000Z",
+      "isActive": false,
+      "isGap": false,
+      "entries": 42,
+      "costUSD": 1.5,
+      "totalTokens": 6000,
+      "tokenCounts": {
+        "inputTokens": 1000,
+        "outputTokens": 2000,
+        "cacheCreationInputTokens": 1500,
+        "cacheReadInputTokens": 1500
+      },
+      "burnRate": null,
+      "projection": null,
+      "models": ["claude-opus-4-7"]
+    },
+    {
+      "id": "gap-2026-06-12T10:00:00.000Z",
+      "startTime": "2026-06-12T10:00:00.000Z",
+      "endTime": "2026-06-12T15:00:00.000Z",
+      "actualEndTime": null,
+      "isActive": false,
+      "isGap": true,
+      "entries": 0,
+      "costUSD": 0,
+      "totalTokens": 0,
+      "tokenCounts": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 0
+      },
+      "burnRate": null,
+      "projection": null,
+      "models": []
+    },
+    {
+      "id": "2026-06-12T15:00:00.000Z",
+      "startTime": "2026-06-12T15:00:00.000Z",
+      "endTime": "2026-06-12T20:00:00.000Z",
+      "actualEndTime": null,
+      "isActive": true,
+      "isGap": false,
+      "entries": 10,
+      "costUSD": 3.0,
+      "totalTokens": 12000,
+      "tokenCounts": {
+        "inputTokens": 2000,
+        "outputTokens": 4000,
+        "cacheCreationInputTokens": 3000,
+        "cacheReadInputTokens": 3000
+      },
+      "burnRate": {
+        "costPerHour": 1.2,
+        "costPerHourDisplay": "$1.20/h",
+        "tokensPerMinute": 100,
+        "tokensPerMinuteIndicator": "NORMAL"
+      },
+      "projection": {
+        "totalCost": 4.5,
+        "totalTokens": 18000,
+        "remainingMinutes": 120
+      },
+      "models": ["claude-opus-4-7", "claude-haiku-4-5-20251001"]
+    }
+  ]
+}

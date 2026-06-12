@@ -29,9 +29,7 @@ test("falls back to the period key used by newer ccusage", () => {
 });
 
 test("throws on a report without a known top-level key", () => {
-  expect(() => normalizeReport({ sessions: [] })).toThrow(
-    "unsupported report type",
-  );
+  expect(() => normalizeReport({ sessions: [] })).toThrow("unsupported report type");
 });
 
 test("normalizes daily report to chart rows", () => {
