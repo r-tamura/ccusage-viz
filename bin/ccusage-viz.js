@@ -295,8 +295,8 @@ const USAGE = `Usage: ccusage-viz [options] [file]
 Visualize ccusage JSON reports (daily/weekly/monthly/blocks) as bar charts.
 Reads JSON from a file argument or stdin:
 
-  ccusage daily --json | ccusage-viz
-  ccusage blocks --json > report.json && ccusage-viz report.json
+  npx ccusage@latest daily --json | ccusage-viz
+  npx ccusage@latest blocks --json > report.json && ccusage-viz report.json
 
 Options:
   --no-color     Disable colored output (also disabled by NO_COLOR / non-TTY)

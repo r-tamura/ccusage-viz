@@ -28,10 +28,10 @@ Avg    $48.42 · 52,821,275 tokens
 Pipe any ccusage JSON report into it, or pass a file:
 
 ```sh
-ccusage daily --json | npx github:r-tamura/ccusage-viz
-ccusage blocks --json | npx github:r-tamura/ccusage-viz
+npx ccusage@latest daily --json | npx github:r-tamura/ccusage-viz
+npx ccusage@latest blocks --json | npx github:r-tamura/ccusage-viz
 
-ccusage monthly --json > report.json
+npx ccusage@latest monthly --json > report.json
 npx github:r-tamura/ccusage-viz report.json
 ```
 
@@ -43,10 +43,10 @@ Filtering is ccusage's job — use its options to limit the range. For example,
 
 ```sh
 # last 3 days (ccusage built-in)
-ccusage blocks --recent --json | npx github:r-tamura/ccusage-viz
+npx ccusage@latest blocks --recent --json | npx github:r-tamura/ccusage-viz
 
 # last 7 days (macOS date)
-ccusage blocks --since "$(date -v-7d +%Y%m%d)" --json | npx github:r-tamura/ccusage-viz
+npx ccusage@latest blocks --since "$(date -v-7d +%Y%m%d)" --json | npx github:r-tamura/ccusage-viz
 ```
 
 ### Options
