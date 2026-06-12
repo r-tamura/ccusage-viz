@@ -43,6 +43,31 @@ test("skips gap blocks", () => {
   expect(normalizeReport(report).rows).toHaveLength(1);
 });
 
+test("captures the active block's projection for a one-line footnote", () => {
+  const report = {
+    blocks: [
+      block({}),
+      block({
+        isActive: true,
+        projection: {
+          totalCost: 4.5,
+          totalTokens: 18000,
+          remainingMinutes: 120,
+        },
+      }),
+    ],
+  };
+  expect(normalizeReport(report).projection).toEqual({
+    cost: 4.5,
+    tokens: 18000,
+    remainingMinutes: 120,
+  });
+});
+
+test("has no projection when no block is active", () => {
+  expect(normalizeReport({ blocks: [block({})] }).projection).toBeUndefined();
+});
+
 test("marks the active block and joins multiple models", () => {
   const report = {
     blocks: [

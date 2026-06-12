@@ -18,9 +18,17 @@
  */
 
 /**
+ * @typedef {object} Projection
+ * @property {number} cost
+ * @property {number} tokens
+ * @property {number} remainingMinutes
+ */
+
+/**
  * @typedef {object} NormalizedReport
  * @property {string} kind - "daily" | "weekly" | "monthly" | "blocks"
  * @property {ChartRow[]} rows
+ * @property {Projection} [projection] - アクティブブロックの予測(blocks のみ)
  */
 
 /**
@@ -48,6 +56,20 @@ export function normalizeReport(report) {
           active: entry.isActive === true,
         }),
       );
+    const activeBlock = report.blocks.find(
+      (/** @type {any} */ entry) => entry.isActive === true && entry.projection,
+    );
+    if (activeBlock) {
+      return {
+        kind: "blocks",
+        rows,
+        projection: {
+          cost: activeBlock.projection.totalCost,
+          tokens: activeBlock.projection.totalTokens,
+          remainingMinutes: activeBlock.projection.remainingMinutes,
+        },
+      };
+    }
     return { kind: "blocks", rows };
   }
   for (const [kind, labelKey] of Object.entries(LABEL_KEYS)) {
@@ -97,6 +119,143 @@ export function summarize(rows) {
     avgCost: rows.length === 0 ? 0 : totalCost / rows.length,
     avgTokens: rows.length === 0 ? 0 : totalTokens / rows.length,
   };
+}
+
+/** 端数表現用の 1/8 ブロック文字。index = 1/8 単位の数 (0 は空) */
+const EIGHTH_BLOCKS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"];
+
+/**
+ * 値を最大値比でスケールした横棒を描画する。端数は 1/8 ブロック文字で表す。
+ *
+ * @param {number} value
+ * @param {number} max - スケール基準の最大値(棒が width いっぱいになる値)
+ * @param {number} width - 棒の最大幅(セル数)
+ * @returns {string}
+ */
+export function renderBar(value, max, width) {
+  if (max <= 0 || value <= 0) {
+    return "";
+  }
+  const eighths = Math.round((value / max) * width * 8);
+  return "█".repeat(Math.floor(eighths / 8)) + EIGHTH_BLOCKS[eighths % 8];
+}
+
+/** ANSI カラーコード(依存ゼロ方針のため直書き) */
+const ANSI = {
+  cyan: "\x1b[36m",
+  magenta: "\x1b[35m",
+  yellow: "\x1b[33m",
+  reset: "\x1b[39m",
+};
+
+/** kind ごとのサマリー/ヘッダ用単位(単数形) */
+const UNITS = { daily: "day", weekly: "week", monthly: "month", blocks: "block" };
+
+/**
+ * @param {string} text
+ * @param {string} colorCode
+ * @param {boolean} enabled
+ * @returns {string}
+ */
+function paint(text, colorCode, enabled) {
+  if (enabled) {
+    return `${colorCode}${text}${ANSI.reset}`;
+  } else {
+    return text;
+  }
+}
+
+/** @param {number} value */
+function formatCost(value) {
+  return `$${value.toFixed(2)}`;
+}
+
+/** @param {number} value */
+function formatTokens(value) {
+  return Math.round(value).toLocaleString("en-US");
+}
+
+/**
+ * 1 メトリクス分の棒グラフ行を組み立てる。
+ *
+ * @param {ChartRow[]} rows
+ * @param {object} options
+ * @param {(row: ChartRow) => number} options.valueOf
+ * @param {(value: number) => string} options.format
+ * @param {string} options.barColor
+ * @param {boolean} options.withNotes - blocks のモデル名注記と ACTIVE 強調を付ける
+ * @param {number} options.width
+ * @param {boolean} options.color
+ * @returns {string[]}
+ */
+function renderChart(rows, { valueOf, format, barColor, withNotes, width, color }) {
+  const labelWidth = Math.max(...rows.map((row) => row.label.length));
+  const values = rows.map((row) => format(valueOf(row)));
+  const valueWidth = Math.max(...values.map((value) => value.length));
+  const barWidth = Math.max(10, width - labelWidth - valueWidth - 4);
+  const maxValue = Math.max(...rows.map(valueOf));
+  return rows.map((row, i) => {
+    const bar = renderBar(valueOf(row), maxValue, barWidth).padEnd(barWidth);
+    let line = `${row.label.padEnd(labelWidth)}  ${paint(bar, barColor, color)}  ${values[i].padStart(valueWidth)}`;
+    if (withNotes) {
+      if (row.note) {
+        line += `  [${row.note}]`;
+      }
+      if (row.active) {
+        line += `  ${paint("⚡ACTIVE", ANSI.yellow, color)}`;
+      }
+    }
+    return line;
+  });
+}
+
+/**
+ * 正規化済みレポートを描画して 1 つの文字列(末尾改行付き)にする。
+ *
+ * @param {NormalizedReport} normalized
+ * @param {{ width: number, color: boolean }} options
+ * @returns {string}
+ */
+export function renderReport(normalized, { width, color }) {
+  const { kind, rows, projection } = normalized;
+  const unit = UNITS[/** @type {keyof typeof UNITS} */ (kind)];
+  const summary = summarize(rows);
+  const chartOptions = { withNotes: kind === "blocks", width, color };
+  const lines = [
+    `ccusage ${kind} — ${summary.count} ${unit}${summary.count === 1 ? "" : "s"}`,
+    "",
+    "Cost (USD)",
+    ...renderChart(rows, {
+      valueOf: (row) => row.cost,
+      format: formatCost,
+      barColor: ANSI.cyan,
+      ...chartOptions,
+    }),
+    "",
+    "Tokens",
+    ...renderChart(rows, {
+      valueOf: (row) => row.tokens,
+      format: formatTokens,
+      barColor: ANSI.magenta,
+      withNotes: false,
+      width,
+      color,
+    }),
+    "",
+  ];
+  if (projection) {
+    lines.push(
+      `⚡ projection: ${formatCost(projection.cost)} · ${formatTokens(projection.tokens)} tokens (${projection.remainingMinutes} min left)`,
+      "",
+    );
+  }
+  lines.push(
+    `Total  ${formatCost(summary.totalCost)} · ${formatTokens(summary.totalTokens)} tokens`,
+    `Peak   ${formatCost(summary.peakCost)} · ${formatTokens(summary.peakTokens)} tokens`,
+    `Avg    ${formatCost(summary.avgCost)} · ${formatTokens(summary.avgTokens)} tokens`,
+    "",
+  );
+  return lines.join("\n");
 }
 
 /**
