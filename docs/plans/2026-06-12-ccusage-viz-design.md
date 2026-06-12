@@ -14,7 +14,7 @@
 | 論点           | 決定                                                                                 |
 | -------------- | ------------------------------------------------------------------------------------ |
 | 名前           | `ccusage-viz`(npm には公開しない)                                                    |
-| 配布           | `npx github:r-tamura/ccusage-viz`。タグ `v1.0.0` を切って案内                        |
+| 配布           | `npx github:r-tamura/ccusage-viz`。タグ `v0.0.1` を切って案内                        |
 | 実装形態       | JS 1ファイル(`bin/ccusage-viz.js`、shebang 付き)+ JSDoc 型注釈                       |
 | 依存           | ランタイム依存ゼロ。devDeps は typescript / vitest / oxlint / oxfmt(+ @types/node)   |
 | ツールチェーン | パッケージ管理は pnpm、テストは vitest、リンターは oxlint、フォーマッタは oxfmt      |
