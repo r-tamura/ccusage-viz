@@ -16,7 +16,8 @@
 | 名前 | `ccusage-viz`(npm には公開しない) |
 | 配布 | `npx github:r-tamura/ccusage-viz`。タグ `v1.0.0` を切って案内 |
 | 実装形態 | JS 1ファイル(`bin/ccusage-viz.js`、shebang 付き)+ JSDoc 型注釈 |
-| 依存 | ランタイム依存ゼロ。devDeps は typescript のみ。テストは `node:test` + `node:assert` |
+| 依存 | ランタイム依存ゼロ。devDeps は typescript / vitest / oxlint / oxfmt(+ @types/node) |
+| ツールチェーン | パッケージ管理は pnpm、テストは vitest、リンターは oxlint、フォーマッタは oxfmt |
 | 入力 | パイプ(stdin)/ファイル引数のみ。ccusage を内部実行しない |
 | 対応種別 | daily / weekly / monthly / blocks 全部。トップレベルキーで自動判別、サブコマンドなし |
 | オプション | `--help` / `--version` / `--no-color` のみ |
@@ -107,7 +108,8 @@ gap 要素は `id` が `gap-...` で `isGap: true`。トップレベル `totals`
 
 ## CI
 
-GitHub Actions で以下を実行:
+GitHub Actions で以下を実行(pnpm でセットアップ):
 
 - `tsc`(checkJs + noEmit)による型検査
-- `node --test`
+- `vitest run`
+- `oxlint`
