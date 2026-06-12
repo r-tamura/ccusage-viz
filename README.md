@@ -38,6 +38,17 @@ npx github:r-tamura/ccusage-viz report.json
 All four report types (`daily` / `weekly` / `monthly` / `blocks`) are
 auto-detected from the JSON — no subcommands.
 
+Filtering is ccusage's job — use its options to limit the range. For example,
+`blocks` can grow to hundreds of rows, so narrow it down on the ccusage side:
+
+```sh
+# last 3 days (ccusage built-in)
+ccusage blocks --recent --json | npx github:r-tamura/ccusage-viz
+
+# last 7 days (macOS date)
+ccusage blocks --since "$(date -v-7d +%Y%m%d)" --json | npx github:r-tamura/ccusage-viz
+```
+
 ### Options
 
 | Option          | Description                                              |
