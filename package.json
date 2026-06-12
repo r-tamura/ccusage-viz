@@ -34,6 +34,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "executionEnv": {
+      "nodeVersion": "26.2.0"
+    }
   }
 }
