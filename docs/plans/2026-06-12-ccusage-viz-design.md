@@ -70,6 +70,8 @@ daily/weekly/monthly の見た目は ccusage-graph 互換を保つ。
 - `isGap: true` の要素は表示しない
 - `isActive: true` の行は黄色 + `⚡ACTIVE` で強調
 - アクティブブロックに `projection` があれば 1 行注記を出す
+- ccusage `--token-limit` 指定時(アクティブブロックに `tokenLimitStatus` が付く)、
+  その `limit` 値以上使った行を赤 + `⚠LIMIT` で強調(アクティブは `status: "exceeds"` で判定)
 - 各行の行末に `models[]` の短縮表記を付ける(例 `claude-opus-4-7` → `opus-4-7`)
 
 #### blocks JSON の実スキーマ(`npx ccusage@latest blocks --json` で確認済み)

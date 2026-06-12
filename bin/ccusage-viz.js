@@ -18,6 +18,7 @@ import { pathToFileURL } from "node:url";
  * @property {number} tokens  - 合計トークン数
  * @property {string} [note]  - 行末の補足(blocks のモデル名短縮表記)
  * @property {boolean} [active] - blocks のアクティブブロック
+ * @property {boolean} [limitHit] - blocks でトークン上限まで使い切った行(ヒットした行のみ true)
  */
 
 /**
@@ -48,15 +49,33 @@ const LABEL_KEYS = { daily: "date", weekly: "week", monthly: "month" };
  */
 export function normalizeReport(report) {
   if (Array.isArray(report.blocks)) {
+    // tokenLimitStatus は ccusage --token-limit 指定時にアクティブブロックへ
+    // のみ付く。その limit 値で過去ブロックの「上限まで使い切った」も判定する。
+    const limitStatus = report.blocks.find(
+      (/** @type {any} */ entry) => entry.isActive === true && entry.tokenLimitStatus,
+    )?.tokenLimitStatus;
     const rows = report.blocks
       .filter((/** @type {any} */ entry) => entry.isGap !== true)
-      .map((/** @type {any} */ entry) => ({
-        label: formatBlockLabel(entry.startTime),
-        cost: entry.costUSD,
-        tokens: entry.totalTokens,
-        note: shortenModels(entry.models),
-        active: entry.isActive === true,
-      }));
+      .map((/** @type {any} */ entry) => {
+        /** @type {ChartRow} */
+        const row = {
+          label: formatBlockLabel(entry.startTime),
+          cost: entry.costUSD,
+          tokens: entry.totalTokens,
+          note: shortenModels(entry.models),
+          active: entry.isActive === true,
+        };
+        if (limitStatus) {
+          const hit =
+            entry.isActive === true
+              ? entry.tokenLimitStatus?.status === "exceeds"
+              : entry.totalTokens >= limitStatus.limit;
+          if (hit) {
+            row.limitHit = true;
+          }
+        }
+        return row;
+      });
     const activeBlock = report.blocks.find(
       (/** @type {any} */ entry) => entry.isActive === true && entry.projection,
     );
@@ -144,6 +163,7 @@ const ANSI = {
   cyan: "\x1b[36m",
   magenta: "\x1b[35m",
   yellow: "\x1b[33m",
+  red: "\x1b[31m",
   reset: "\x1b[39m",
 };
 
@@ -195,13 +215,18 @@ function renderChart(rows, { valueOf, format, barColor, withNotes, width, color 
   const maxValue = Math.max(...rows.map(valueOf));
   return rows.map((row, i) => {
     const bar = renderBar(valueOf(row), maxValue, barWidth).padEnd(barWidth);
-    let line = `${row.label.padEnd(labelWidth)}  ${paint(bar, barColor, color)}  ${values[i].padStart(valueWidth)}`;
+    // 上限まで使い切った行はメトリクス色より優先して赤で塗る
+    const rowBarColor = row.limitHit ? ANSI.red : barColor;
+    let line = `${row.label.padEnd(labelWidth)}  ${paint(bar, rowBarColor, color)}  ${values[i].padStart(valueWidth)}`;
     if (withNotes) {
       if (row.note) {
         line += `  [${row.note}]`;
       }
       if (row.active) {
         line += `  ${paint("⚡ACTIVE", ANSI.yellow, color)}`;
+      }
+      if (row.limitHit) {
+        line += `  ${paint("⚠LIMIT", ANSI.red, color)}`;
       }
     }
     return line;

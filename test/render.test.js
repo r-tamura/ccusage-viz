@@ -129,3 +129,32 @@ test("renders an empty report without charts", () => {
     "ccusage daily — 0 days\n\n(no data)\n",
   );
 });
+
+test("marks limit-hit rows with ⚠LIMIT and paints them red", () => {
+  const normalized = {
+    kind: "blocks",
+    rows: [
+      {
+        label: "06-12 10:00",
+        cost: 1.5,
+        tokens: 6000,
+        note: "opus-4-7",
+        active: false,
+        limitHit: true,
+      },
+      {
+        label: "06-12 15:00",
+        cost: 3,
+        tokens: 12000,
+        note: "opus-4-7",
+        active: true,
+        limitHit: true,
+      },
+    ],
+  };
+  const plain = renderReport(normalized, { width: 32, color: false });
+  expect(plain).toContain("$1.50  [opus-4-7]  ⚠LIMIT");
+  expect(plain).toContain("$3.00  [opus-4-7]  ⚡ACTIVE  ⚠LIMIT");
+  const colored = renderReport(normalized, { width: 32, color: true });
+  expect(colored).toContain("\x1b[31m"); // red bars and marker
+});

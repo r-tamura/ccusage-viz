@@ -58,6 +58,8 @@ test("renders a blocks report: skips gaps, marks ACTIVE, shows projection", () =
   expect(result.stdout).toContain("[opus-4-7, haiku-4-5-20251001]");
   expect(result.stdout).toContain("⚡ACTIVE");
   expect(result.stdout).toContain("⚡ projection: $4.50 · 18,000 tokens (120 min left)");
+  // fixture の limit は 6000: 過去ブロック(6000)とアクティブ(exceeds)が該当
+  expect(result.stdout.match(/⚠LIMIT/g)).toHaveLength(2);
 });
 
 test("auto-detects weekly and monthly reports", () => {

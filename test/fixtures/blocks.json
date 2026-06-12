@@ -67,6 +67,12 @@
         "totalTokens": 18000,
         "remainingMinutes": 120
       },
+      "tokenLimitStatus": {
+        "limit": 6000,
+        "percentUsed": 200,
+        "projectedUsage": 18000,
+        "status": "exceeds"
+      },
       "models": ["claude-opus-4-7", "claude-haiku-4-5-20251001"]
     }
   ]

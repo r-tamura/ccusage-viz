@@ -49,6 +49,14 @@ npx ccusage@latest blocks --recent --json | npx github:r-tamura/ccusage-viz
 npx ccusage@latest blocks --since "$(date -v-7d +%Y%m%d)" --json | npx github:r-tamura/ccusage-viz
 ```
 
+With ccusage's `--token-limit`, blocks that used up the token limit are
+painted red and marked `⚠LIMIT` (the active block is flagged when its
+status is `exceeds`):
+
+```sh
+npx ccusage@latest blocks --token-limit max --json | npx github:r-tamura/ccusage-viz
+```
+
 ### Options
 
 | Option          | Description                                              |

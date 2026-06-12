@@ -79,3 +79,44 @@ test("marks the active block and joins multiple models", () => {
     note: "opus-4-7, haiku-4-5-20251001",
   });
 });
+
+test("flags blocks that used the token limit when tokenLimitStatus is present", () => {
+  const report = {
+    blocks: [
+      block({ totalTokens: 6000 }), // == limit
+      block({ totalTokens: 5999 }), // under
+      block({
+        isActive: true,
+        totalTokens: 12000,
+        tokenLimitStatus: {
+          limit: 6000,
+          percentUsed: 200,
+          projectedUsage: 18000,
+          status: "exceeds",
+        },
+      }),
+    ],
+  };
+  const rows = normalizeReport(report).rows;
+  expect(rows[0].limitHit).toBe(true);
+  expect(rows[1].limitHit).toBeUndefined();
+  expect(rows[2].limitHit).toBe(true);
+});
+
+test("does not flag the active block while its status is ok", () => {
+  const report = {
+    blocks: [
+      block({
+        isActive: true,
+        totalTokens: 5000,
+        tokenLimitStatus: {
+          limit: 6000,
+          percentUsed: 83,
+          projectedUsage: 5900,
+          status: "ok",
+        },
+      }),
+    ],
+  };
+  expect(normalizeReport(report).rows[0].limitHit).toBeUndefined();
+});
