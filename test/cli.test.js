@@ -115,3 +115,15 @@ test("unknown option prints usage to stderr and exits 2", () => {
   expect(result.stderr).toContain("Usage: ccusage-viz");
   expect(result.status).toBe(2);
 });
+
+// 描画仕様自体は render.test.js が固定しているため、ここでは CLI の配管
+// (ファイル読込→正規化→幅 80・色なしで描画→stdout)を全 fixture で完全一致検証する。
+test("CLI stdout matches the renderer exactly for every fixture", async () => {
+  process.env.TZ = "UTC";
+  const { normalizeReport, renderReport } = await import("../bin/ccusage-viz.js");
+  for (const name of ["daily.json", "weekly.json", "monthly.json", "blocks.json"]) {
+    const report = JSON.parse(fs.readFileSync(fixture(name), "utf8"));
+    const expected = renderReport(normalizeReport(report), { width: 80, color: false });
+    expect(run([fixture(name)]).stdout).toBe(expected);
+  }
+});
